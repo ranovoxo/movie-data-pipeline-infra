@@ -56,29 +56,32 @@ resource "aws_instance" "pipeline" {
     #!/bin/bash
     set -e
 
-    # 1. Install prerequisites
+    # Install prerequisites
     apt-get update
-    apt-get install -y docker.io docker-compose git
+    apt-get install -y docker.io docker-compose git awscli
 
-    # 2. Add ubuntu user to docker group
+    # Allow ubuntu user to run docker
     usermod -aG docker ubuntu
 
-    # 3. Clone your pipeline repo
+    # Clone the pipeline repository
     mkdir -p /home/ubuntu/app
     chown ubuntu:ubuntu /home/ubuntu/app
     sudo -u ubuntu git clone https://github.com/ranovoxo/movie-data-pipeline.git /home/ubuntu/app
 
-    # 4. Copy .env template to .env
+    # Prepare environment file
     cd /home/ubuntu/app
     if [ -f .env.template ]; then
       sudo -u ubuntu cp .env.template .env
-      # Optionally inject real values here via envsubst or similar
-      # e.g. sudo -u ubuntu sed -i "s/TMDB_API_KEY=.*/TMDB_API_KEY=${var.tmdb_key}/" .env
     fi
 
-    # 5. Launch the Docker Compose stack
-    cd /home/ubuntu/app
-    sudo -u ubuntu docker-compose up -d --build
+    DB_PASS=$(aws ssm get-parameter --name "${aws_ssm_parameter.db_password.name}" --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+    echo "POSTGRES_HOST=${aws_db_instance.postgres.address}" | sudo tee -a .env
+    echo "POSTGRES_USER=${var.db_username}" | sudo tee -a .env
+    echo "POSTGRES_PASSWORD=$DB_PASS" | sudo tee -a .env
+    echo "POSTGRES_DB=${aws_db_instance.postgres.db_name}" | sudo tee -a .env
+
+    # Start Airflow
+    sudo -u ubuntu docker-compose up -d
   EOF
 
   tags = {
