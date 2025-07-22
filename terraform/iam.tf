@@ -1,4 +1,3 @@
-# Ensure you're referencing attributes that exist on data sources:
 
 data "aws_iam_group" "cli_group" {
   group_name = var.cli_group_name
