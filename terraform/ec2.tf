@@ -48,6 +48,7 @@ resource "aws_instance" "pipeline" {
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.pipeline_sg.id]
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.pipeline_profile.name
 
   # ------------------------------------------------------------
   # user_data to fully bootstrap the repo & Docker Compose stack
@@ -58,7 +59,10 @@ resource "aws_instance" "pipeline" {
 
     # Install prerequisites
     apt-get update
+    # Install Docker and supporting tools
     apt-get install -y docker.io docker-compose git awscli
+    systemctl enable docker
+    systemctl start docker
 
     # Allow ubuntu user to run docker
     usermod -aG docker ubuntu
@@ -81,7 +85,7 @@ resource "aws_instance" "pipeline" {
     echo "POSTGRES_DB=${aws_db_instance.postgres.db_name}" | sudo tee -a .env
 
     # Start Airflow
-    sudo -u ubuntu docker-compose up -d
+    docker-compose up -d
   EOF
 
   tags = {
