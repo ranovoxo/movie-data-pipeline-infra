@@ -5,6 +5,7 @@ variable "aws_region" {
 }
 
 # variable "ami_id" {
+
 #  description = "AMI_ID for the EC2 instance (Ubuntu 20.04 LTS)"
 #  type        = string
 #  default     = ""
@@ -45,7 +46,42 @@ variable "cli_group_name" {
 }
 
 variable "ami_id" {
+
   description = "Name of the AMI"
   type        = string
   sensitive   = true
+}
+
+variable "db_username" {
+  description = "Username for the RDS PostgreSQL instance"
+  type        = string
+  default     = "airflow"
+}
+
+variable "db_password" {
+  description = "Password for the RDS PostgreSQL instance"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_name" {
+  description = "Name of the RDS database"
+  type        = string
+  default     = "airflow"
+}
+
+variable "dags_bucket_name" {
+  description = "S3 bucket name for DAGs"
+  type        = string
+}
+
+variable "backups_bucket_name" {
+  description = "S3 bucket name for backups"
+  type        = string
+}
+
+variable "budget_limit" {
+  description = "Monthly budget limit in USD"
+  type        = string
+  default     = "20"
 }
