@@ -73,14 +73,15 @@ resource "aws_instance" "pipeline" {
     sudo -u ubuntu git clone https://github.com/ranovoxo/movie-data-pipeline.git /home/ubuntu/app
 
     cd /home/ubuntu/app
-
-    # Fetch secrets from AWS Secrets Manager and export them
-    export POSTGRES_USER=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_USER --query SecretString --output text --region ${var.aws_region})
-    export POSTGRES_PW=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_PW --query SecretString --output text --region ${var.aws_region})
-    export POSTGRES_DB=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_DB --query SecretString --output text --region ${var.aws_region})
-    export PGADMIN_DEFAULT_EMAIL=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/PGADMIN_DEFAULT_EMAIL --query SecretString --output text --region ${var.aws_region})
-    export PGADMIN_DEFAULT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/PGADMIN_DEFAULT_PASSWORD --query SecretString --output text --region ${var.aws_region})
-    export TABLEAU_EXPORT_PATH=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/TABLEAU_EXPORT_PATH --query SecretString --output text --region ${var.aws_region})
+    # Fetch parameters from AWS SSM Parameter Store and write to .env
+    cat <<EOT > /home/ubuntu/app/.env
+POSTGRES_USER=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_USER --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+POSTGRES_PW=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_PW --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+POSTGRES_DB=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_DB --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+PGADMIN_DEFAULT_EMAIL=$(aws ssm get-parameter --name /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+PGADMIN_DEFAULT_PASSWORD=$(aws ssm get-parameter --name /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+TABLEAU_EXPORT_PATH=$(aws ssm get-parameter --name /movie-app/prod/export/TABLEAU_EXPORT_PATH --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
+EOT
 
     export POSTGRES_HOST=${aws_db_instance.postgres.address}
 
