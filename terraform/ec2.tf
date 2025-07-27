@@ -60,7 +60,7 @@ resource "aws_instance" "pipeline" {
     # Install prerequisites
     apt-get update
     # Install Docker and supporting tools
-    apt-get install -y docker.io docker-compose git awscli
+    apt-get install -y docker.io docker-compose git awscli jq
     systemctl enable docker
     systemctl start docker
 
@@ -72,17 +72,17 @@ resource "aws_instance" "pipeline" {
     chown ubuntu:ubuntu /home/ubuntu/app
     sudo -u ubuntu git clone https://github.com/ranovoxo/movie-data-pipeline.git /home/ubuntu/app
 
-    # Prepare environment file
     cd /home/ubuntu/app
-    if [ -f .env.template ]; then
-      sudo -u ubuntu cp .env.template .env
-    fi
 
-    DB_PASS=$(aws ssm get-parameter --name "${aws_ssm_parameter.db_password.name}" --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-    echo "POSTGRES_HOST=${aws_db_instance.postgres.address}" | sudo tee -a .env
-    echo "POSTGRES_USER=${var.db_username}" | sudo tee -a .env
-    echo "POSTGRES_PASSWORD=$DB_PASS" | sudo tee -a .env
-    echo "POSTGRES_DB=${aws_db_instance.postgres.db_name}" | sudo tee -a .env
+    # Fetch secrets from AWS Secrets Manager and export them
+    export POSTGRES_USER=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_USER --query SecretString --output text --region ${var.aws_region})
+    export POSTGRES_PW=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_PW --query SecretString --output text --region ${var.aws_region})
+    export POSTGRES_DB=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/POSTGRES_DB --query SecretString --output text --region ${var.aws_region})
+    export PGADMIN_DEFAULT_EMAIL=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/PGADMIN_DEFAULT_EMAIL --query SecretString --output text --region ${var.aws_region})
+    export PGADMIN_DEFAULT_PASSWORD=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/PGADMIN_DEFAULT_PASSWORD --query SecretString --output text --region ${var.aws_region})
+    export TABLEAU_EXPORT_PATH=$(aws secretsmanager get-secret-value --secret-id /movie-app/prod/TABLEAU_EXPORT_PATH --query SecretString --output text --region ${var.aws_region})
+
+    export POSTGRES_HOST=${aws_db_instance.postgres.address}
 
     # Start Airflow
     docker-compose up -d
