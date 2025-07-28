@@ -1,3 +1,4 @@
+
 # Data source to fetch the latest Ubuntu 20.04 LTS AMI
 data "aws_ami" "ubuntu_focal" {
   most_recent = true
@@ -7,10 +8,9 @@ data "aws_ami" "ubuntu_focal" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 
-  owners = ["099720109477"]  # Canonical’s AWS account ID
+  owners = ["099720109477"]
 }
 
-# Security Group for SSH & Airflow UI
 resource "aws_security_group" "pipeline_sg" {
   name        = "movie-pipeline-sg"
   description = "Allow SSH and Airflow UI"
@@ -40,7 +40,6 @@ resource "aws_security_group" "pipeline_sg" {
   }
 }
 
-# EC2 Instance using the looked-up AMI
 resource "aws_instance" "pipeline" {
   ami                         = data.aws_ami.ubuntu_focal.id
   instance_type               = "t3.micro"
@@ -50,51 +49,80 @@ resource "aws_instance" "pipeline" {
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.pipeline_profile.name
 
-  # ------------------------------------------------------------
-  # user_data to fully bootstrap the repo & Docker Compose stack
-  # ------------------------------------------------------------
   user_data = <<-EOF
     #!/bin/bash
-    set -e
+    set -euo pipefail
 
     # Install prerequisites
     apt-get update
-    # Install Docker and supporting tools
-    apt-get install -y docker.io docker-compose git awscli jq
+    apt-get install -y docker.io git awscli jq curl
     systemctl enable docker
     systemctl start docker
 
-    # Allow ubuntu user to run docker
+    # Install Docker Compose v2 standalone binary
+    curl -SL https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64 \
+      -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    # Symlink so 'docker-compose' is on root's PATH
+    ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+    # Allow ubuntu user to run Docker
     usermod -aG docker ubuntu
 
-    # Clone the pipeline repository
-    mkdir -p /home/ubuntu/app
-    chown ubuntu:ubuntu /home/ubuntu/app
-    sudo -u ubuntu git clone https://github.com/ranovoxo/movie-data-pipeline.git /home/ubuntu/app
+    # Export AWS region for aws CLI
+    export AWS_DEFAULT_REGION=${var.aws_region}
 
-    cd /home/ubuntu/app
-    # Fetch parameters from AWS SSM Parameter Store and write to .env
-    cat <<EOT > /home/ubuntu/app/.env
-POSTGRES_USER=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_USER --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-POSTGRES_PW=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_PW --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-POSTGRES_DB=$(aws ssm get-parameter --name /movie-app/prod/postgres/POSTGRES_DB --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-PGADMIN_DEFAULT_EMAIL=$(aws ssm get-parameter --name /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-PGADMIN_DEFAULT_PASSWORD=$(aws ssm get-parameter --name /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-TABLEAU_EXPORT_PATH=$(aws ssm get-parameter --name /movie-app/prod/export/TABLEAU_EXPORT_PATH --with-decryption --query Parameter.Value --output text --region ${var.aws_region})
-EOT
+    # Clone or update the pipeline repo
+    APP_DIR=/home/ubuntu/app
+    REPO=https://github.com/ranovoxo/movie-data-pipeline-cloud.git
+    mkdir -p "$${APP_DIR}"
+    chown ubuntu:ubuntu "$${APP_DIR}"
+    
+    if [ ! -d "$${APP_DIR}/.git" ]; then
+      sudo -u ubuntu git clone "$${REPO}" "$${APP_DIR}"
+    else
+      cd "$${APP_DIR}"
+      sudo -u ubuntu git pull origin main
+    fi
+    cd "$${APP_DIR}"
 
+    # Retry helper for SSM SecureString fetches
+    fetch() {
+      until aws ssm get-parameter --name "$1" --with-decryption \
+            --query Parameter.Value --output text; do
+        echo "Waiting for parameter $1…" >&2
+        sleep 5
+      done
+    }
+
+    # Write .env with decrypted values
+    cat <<EOT > "$${APP_DIR}/.env"
+    POSTGRES_USER=$(fetch /movie-app/prod/postgres/POSTGRES_USER)
+    POSTGRES_PW=$(fetch /movie-app/prod/postgres/POSTGRES_PW)
+    POSTGRES_DB=$(fetch /movie-app/prod/postgres/POSTGRES_DB)
+    PGADMIN_DEFAULT_EMAIL=$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL)
+    PGADMIN_DEFAULT_PASSWORD=$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD)
+    TABLEAU_EXPORT_PATH=$(fetch /movie-app/prod/export/TABLEAU_EXPORT_PATH)
+    EOT
+
+    # Point to your RDS host (Terraform will substitute the address)
     export POSTGRES_HOST=${aws_db_instance.postgres.address}
 
-    # Start Airflow
+    # Bring up the Docker Compose services
     docker-compose up -d
   EOF
+
 
   tags = {
     Name = "movie-pipeline"
   }
+
+  # To minimize downtime on replacement:
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-# Elastic IP for a stable public endpoint
 resource "aws_eip" "pipeline_ip" {
   instance = aws_instance.pipeline.id
   domain   = "vpc"

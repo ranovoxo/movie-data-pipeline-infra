@@ -22,6 +22,16 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "ec2_name" {
+  description = "VPC ID where the EC2 will be deployed"
+  type        = string
+}
+
+variable "project_name" {
+  description = "VPC ID where the EC2 will be deployed"
+  type        = string
+}
+
 variable "subnet_id" {
   description = "Public subnet ID for EC2 instance"
   type        = string
