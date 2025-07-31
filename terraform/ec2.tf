@@ -50,7 +50,7 @@ resource "aws_instance" "pipeline" {
   iam_instance_profile        = aws_iam_instance_profile.pipeline_profile.name
 
   user_data = templatefile("${path.module}/ec2_user_data.sh.tpl", {
-    aws_region        = aws_region
+    aws_region        = var.aws_region
     postgres_host     = aws_db_instance.postgres.address
     postgres_port     = aws_db_instance.postgres.port
   })
