@@ -49,75 +49,16 @@ resource "aws_instance" "pipeline" {
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.pipeline_profile.name
 
-  user_data = <<-EOF
-    #!/bin/bash
-    set -euo pipefail
-
-    # Install prerequisites
-    apt-get update
-    apt-get install -y docker.io git awscli jq curl
-    systemctl enable docker
-    systemctl start docker
-
-    # Install Docker Compose v2 standalone binary
-    curl -SL https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64 \
-      -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    # Symlink so 'docker-compose' is on root's PATH
-    ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-
-    # Allow ubuntu user to run Docker
-    usermod -aG docker ubuntu
-
-    # Export AWS region for aws CLI
-    export AWS_DEFAULT_REGION=${var.aws_region}
-
-    # Clone or update the pipeline repo
-    APP_DIR=/home/ubuntu/app
-    REPO=https://github.com/ranovoxo/movie-data-pipeline-cloud.git
-    mkdir -p "$${APP_DIR}"
-    chown ubuntu:ubuntu "$${APP_DIR}"
-    
-    if [ ! -d "$${APP_DIR}/.git" ]; then
-      sudo -u ubuntu git clone "$${REPO}" "$${APP_DIR}"
-    else
-      cd "$${APP_DIR}"
-      sudo -u ubuntu git pull origin main
-    fi
-    cd "$${APP_DIR}"
-
-    # Retry helper for SSM SecureString fetches
-    fetch() {
-      until aws ssm get-parameter --name "$1" --with-decryption \
-            --query Parameter.Value --output text; do
-        echo "Waiting for parameter $1…" >&2
-        sleep 5
-      done
-    }
-
-    # Write .env with decrypted values
-    cat <<EOT > "$${APP_DIR}/.env"
-    POSTGRES_USER=$(fetch /movie-app/prod/postgres/POSTGRES_USER)
-    POSTGRES_PW=$(fetch /movie-app/prod/postgres/POSTGRES_PW)
-    POSTGRES_DB=$(fetch /movie-app/prod/postgres/POSTGRES_DB)
-    PGADMIN_DEFAULT_EMAIL=$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL)
-    PGADMIN_DEFAULT_PASSWORD=$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD)
-    TABLEAU_EXPORT_PATH=$(fetch /movie-app/prod/export/TABLEAU_EXPORT_PATH)
-    EOT
-
-    # Point to your RDS host (Terraform will substitute the address)
-    export POSTGRES_HOST=${aws_db_instance.postgres.address}
-
-    # Bring up the Docker Compose services
-    docker-compose up -d
-  EOF
-
+  user_data = templatefile("${path.module}/ec2_user_data.sh.tpl", {
+    aws_region        = aws_region
+    postgres_host     = aws_db_instance.postgres.address
+    postgres_port     = aws_db_instance.postgres.port
+  })
 
   tags = {
     Name = "movie-pipeline"
   }
 
-  # To minimize downtime on replacement:
   lifecycle {
     create_before_destroy = true
   }
