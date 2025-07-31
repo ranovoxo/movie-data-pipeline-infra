@@ -1,12 +1,11 @@
 # Movie Data Pipeline Infrastructure
 
-This repository contains Terraform configurations for provisioning the AWS infrastructure required to run the [movie-data-pipeline](https://github.com/ranovoxo/movie-data-pipeline) project. The configuration spins up an EC2 instance to host the Airflow pipeline, a PostgreSQL RDS database, S3 buckets for DAG storage and backups, IAM roles and group membership, and a monthly cost budget.
+This repository contains Terraform configurations for provisioning the AWS infrastructure required to run the [movie-data-pipeline](https://github.com/ranovoxo/movie-data-pipeline) project. The configuration spins up an EC2 instance to host the Airflow pipeline, a PostgreSQL RDS database, IAM roles and group membership, and a monthly cost budget.
 
 ### Resources Provisioned
 
 * **EC2 instance** – Ubuntu 20.04 host bootstrapped with Docker and the pipeline via a user-data script. An Elastic IP and security group (SSH + Airflow UI) are attached.
 * **RDS PostgreSQL** – database instance with credentials stored in AWS Systems Manager Parameter Store.
-* **S3 buckets** – separate buckets for Airflow DAGs and backups.
 * **IAM** – instance role with SSM + KMS permissions and membership for a pre-existing CLI group.
 * **Budget** – monthly cost budget to keep spending under control.
 
@@ -28,7 +27,7 @@ This repository contains Terraform configurations for provisioning the AWS infra
   - `ec2_user_data.sh.tpl` shell script executed on first boot to install Docker, fetch secrets and start the services
   - `iam.tf` sets up IAM roles and an instance profile
   - `rds.tf` provisions a PostgreSQL database and stores the password in Parameter Store
-  - `storage.tf` creates S3 buckets and a monthly cost budget
+  - `storage.tf` defines a monthly cost budget
   - `outputs.tf` exports useful values such as the instance IP and RDS endpoint
 
 ## Usage
@@ -46,11 +45,9 @@ This repository contains Terraform configurations for provisioning the AWS infra
                   -var="vpc_id=<vpc-id>" \
                   -var="subnet_id=<subnet-id>" \
                   -var="pipeline_cli_users=[\"<iam-user>\"]" \
-                  -var="cli_group_name=<cli-group>" \
-                  -var="ami_id=<ami-id>" \
-                  -var="db_password=<db-password>" \
-                  -var="dags_bucket_name=<bucket-name>" \
-                  -var="backups_bucket_name=<bucket-name>"
+                   -var="cli_group_name=<cli-group>" \
+                   -var="ami_id=<ami-id>" \
+                   -var="db_password=<db-password>"
    ```
 
 3. Apply the configuration:
@@ -85,8 +82,6 @@ Key variables for the deployment are defined in `terraform/variables.tf`. Exampl
 - `vpc_id` / `subnet_id` – networking for the EC2 instance
 - `pipeline_cli_users` – list of IAM users to add to the CLI group
 - `cli_group_name` – existing IAM group for pipeline CLI access
-- `dags_bucket_name` – S3 bucket name for Airflow DAGs
-- `backups_bucket_name` – S3 bucket name for backups
 - `db_username`, `db_password`, `db_name` – RDS database credentials
 - `budget_limit` – monthly cost limit in USD
 
