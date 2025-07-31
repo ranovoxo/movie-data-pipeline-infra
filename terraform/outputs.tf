@@ -18,12 +18,3 @@ output "rds_endpoint" {
   value       = aws_db_instance.postgres.endpoint
 }
 
-output "dags_bucket_name" {
-  description = "S3 bucket storing Airflow DAGs"
-  value       = aws_s3_bucket.dags.bucket
-}
-
-output "backups_bucket_name" {
-  description = "S3 bucket for backups"
-  value       = aws_s3_bucket.backups.bucket
-}

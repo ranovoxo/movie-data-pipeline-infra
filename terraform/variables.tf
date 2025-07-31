@@ -80,16 +80,6 @@ variable "db_name" {
   default     = "airflow"
 }
 
-variable "dags_bucket_name" {
-  description = "S3 bucket name for DAGs"
-  type        = string
-}
-
-variable "backups_bucket_name" {
-  description = "S3 bucket name for backups"
-  type        = string
-}
-
 variable "budget_limit" {
   description = "Monthly budget limit in USD"
   type        = string
