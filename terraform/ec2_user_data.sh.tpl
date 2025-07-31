@@ -18,7 +18,7 @@ ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
 usermod -aG docker ubuntu
 
 # Export AWS region for aws CLI
-export AWS_DEFAULT_REGION=${aws_region} 
+export AWS_DEFAULT_REGION=${aws_region}
 
 # Clone or update the pipeline repo
 APP_DIR=/home/ubuntu/app
@@ -36,10 +36,12 @@ cd "${APP_DIR}"
 
 # Retry helper for SSM SecureString fetches
 fetch() {
-    until aws ssm get-parameter --name "$1" --with-decryption \
-        --query Parameter.Value --output text; do
-    echo "Waiting for parameter $1…" >&2
-    sleep 5
+    local param="$1"
+    local value
+    until value=$(aws ssm get-parameter --name "$param" --with-decryption \
+        --query Parameter.Value --output text 2>/dev/null); do
+        echo "Waiting for parameter $param…" >&2
+        sleep 5
     done
     echo "$value"
 }
@@ -47,8 +49,9 @@ fetch() {
 # Write .env with decrypted values
 
 # RDS host & port come straight from Terraform
-POSTGRES_HOST=${aws_db_instance.postgres.address}
-POSTGRES_PORT=${aws_db_instance.postgres.port}
+POSTGRES_HOST=${postgres_host}
+POSTGRES_PORT=${postgres_port}
+export POSTGRES_HOST POSTGRES_PORT
 
 # Fetching parameters from parameter store
 export POSTGRES_USER="$(fetch /movie-app/prod/postgres/POSTGRES_USER)"
@@ -56,16 +59,12 @@ export POSTGRES_PW="$(fetch /movie-app/prod/postgres/POSTGRES_PW)"
 export POSTGRES_DB="$(fetch /movie-app/prod/postgres/POSTGRES_DB)"
 
 
-SQL_ALCHEMY_CONN="postgresql://$POSTGRES_USER:$POSTGRES_PW@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/$POSTGRES_DB"
+SQL_ALCHEMY_CONN="postgresql://$POSTGRES_USER:$POSTGRES_PW@${postgres_host}:${postgres_port}/$POSTGRES_DB"
 export SQL_ALCHEMY_CONN
 
 export PGADMIN_DEFAULT_EMAIL="$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL)"
 export PGADMIN_DEFAULT_PASSWORD="$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD)"
 export TABLEAU_EXPORT_PATH="$(fetch /movie-app/prod/export/TABLEAU_EXPORT_PATH)"
-EOT
-
-# Point to your RDS host (Terraform will substitute the address)
-export POSTGRES_HOST=${aws_db_instance.postgres.address}
 
 # Bring up the Docker Compose services
 docker-compose up -d
