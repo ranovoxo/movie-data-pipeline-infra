@@ -23,16 +23,16 @@ export AWS_DEFAULT_REGION=${aws_region}
 # Clone or update the pipeline repo
 APP_DIR=/home/ubuntu/app
 REPO=https://github.com/ranovoxo/movie-data-pipeline-cloud.git
-mkdir -p "${APP_DIR}"
-chown ubuntu:ubuntu "${APP_DIR}"
+mkdir -p "$${APP_DIR}"
+chown ubuntu:ubuntu "$${APP_DIR}"
 
-if [ ! -d "${APP_DIR}/.git" ]; then
-    sudo -u ubuntu git clone "${REPO}" "${APP_DIR}"
+if [ ! -d "$${APP_DIR}/.git" ]; then
+    sudo -u ubuntu git clone "$${REPO}" "$${APP_DIR}"
 else
-    cd "${APP_DIR}"
+    cd "$${APP_DIR}"
     sudo -u ubuntu git pull origin main
 fi
-cd "${APP_DIR}"
+cd "$${APP_DIR}"
 
 # Retry helper for SSM SecureString fetches
 fetch() {
