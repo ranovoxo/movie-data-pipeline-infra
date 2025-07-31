@@ -45,9 +45,7 @@ fetch() {
     done
     echo "$value"
 }
-
-# Write .env with decrypted values
-
+ 
 # RDS host & port come straight from Terraform
 POSTGRES_HOST=${postgres_host}
 POSTGRES_PORT=${postgres_port}
@@ -65,6 +63,19 @@ export SQL_ALCHEMY_CONN
 export PGADMIN_DEFAULT_EMAIL="$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_EMAIL)"
 export PGADMIN_DEFAULT_PASSWORD="$(fetch /movie-app/prod/pgadmin/PGADMIN_DEFAULT_PASSWORD)"
 export TABLEAU_EXPORT_PATH="$(fetch /movie-app/prod/export/TABLEAU_EXPORT_PATH)"
+
+# Persist env vars for docker-compose
+cat > .env <<EOF
+POSTGRES_HOST=$POSTGRES_HOST
+POSTGRES_PORT=$POSTGRES_PORT
+POSTGRES_USER=$POSTGRES_USER
+POSTGRES_PW=$POSTGRES_PW
+POSTGRES_DB=$POSTGRES_DB
+SQL_ALCHEMY_CONN=$SQL_ALCHEMY_CONN
+PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL
+PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD
+TABLEAU_EXPORT_PATH=$TABLEAU_EXPORT_PATH
+EOF
 
 # Bring up the Docker Compose services
 docker-compose up -d
