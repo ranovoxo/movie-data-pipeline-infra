@@ -39,3 +39,4 @@ terraform.rc
 tfplan
 important_commands.txt
 plan.tfplan
+movie-pipeline-key.pem

@@ -85,3 +85,35 @@ variable "budget_limit" {
   type        = string
   default     = "20"
 }
+
+variable "airflow_admin_username" {
+  description = "Airflow admin username"
+  type        = string
+}
+
+variable "airflow_admin_firstname" {
+  description = "Airflow admin first name"
+  type        = string
+}
+
+variable "airflow_admin_lastname" {
+  description = "Airflow admin last name"
+  type        = string
+}
+
+variable "airflow_admin_role" {
+  description = "Airflow admin role (e.g., Admin)"
+  type        = string
+  default     = "Admin"
+}
+
+variable "airflow_admin_email" {
+  description = "Airflow admin email address"
+  type        = string
+}
+
+variable "airflow_admin_password" {
+  description = "Airflow admin password"
+  type        = string
+  sensitive   = true
+}

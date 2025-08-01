@@ -47,8 +47,8 @@ fetch() {
 }
  
 # RDS host & port come straight from Terraform
-POSTGRES_HOST=${postgres_host}
-POSTGRES_PORT=${postgres_port}
+POSTGRES_HOST="$(fetch /movie-app/prod/postgres/POSTGRES_HOST)"
+POSTGRES_PORT="$(fetch /movie-app/prod/postgres/POSTGRES_PORT)"
 export POSTGRES_HOST POSTGRES_PORT
 
 # Fetching parameters from parameter store
@@ -77,5 +77,18 @@ PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD
 TABLEAU_EXPORT_PATH=$TABLEAU_EXPORT_PATH
 EOF
 
+# Initialize Airflow DB ()
+docker-compose run airflow-webserver airflow db init
+
 # Bring up the Docker Compose services
 docker-compose up -d
+
+
+# create a temporary user in airflow to be able to login to the UI
+docker-compose run --rm airflow-webserver airflow users create \
+  --username ${airflow_admin_username} \
+  --firstname ${airflow_admin_firstname} \
+  --lastname ${airflow_admin_lastname} \
+  --role ${airflow_admin_role} \
+  --email ${airflow_admin_email} \
+  --password ${airflow_admin_password} || true

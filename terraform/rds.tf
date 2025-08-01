@@ -10,6 +10,8 @@ resource "aws_db_instance" "postgres" {
   db_name                 = var.db_name
   publicly_accessible     = true
   skip_final_snapshot     = true
+  deletion_protection = true
+
 }
 
 # SSM parameter to store DB password

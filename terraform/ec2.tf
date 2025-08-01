@@ -13,10 +13,10 @@ data "aws_ami" "ubuntu_focal" {
 
 resource "aws_instance" "pipeline" {
   ami                         = data.aws_ami.ubuntu_focal.id
-  instance_type               = "t3.micro"
+  instance_type               = "t3.medium"
   key_name                    = var.key_name
   subnet_id                   = var.subnet_id
-  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
+  vpc_security_group_ids      = [aws_security_group.pipeline_sg.id]
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.pipeline_profile.name
 
@@ -24,6 +24,12 @@ resource "aws_instance" "pipeline" {
     aws_region        = var.aws_region
     postgres_host     = aws_db_instance.postgres.address
     postgres_port     = aws_db_instance.postgres.port
+    airflow_admin_username  = var.airflow_admin_username
+    airflow_admin_firstname = var.airflow_admin_firstname
+    airflow_admin_lastname  = var.airflow_admin_lastname
+    airflow_admin_role      = var.airflow_admin_role
+    airflow_admin_email     = var.airflow_admin_email
+    airflow_admin_password  = var.airflow_admin_password
   })
 
   tags = {
