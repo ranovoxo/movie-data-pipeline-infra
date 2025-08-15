@@ -18,3 +18,13 @@ output "rds_endpoint" {
   value       = aws_db_instance.postgres.endpoint
 }
 
+output "ml_artifacts_bucket_name" {
+  description = "Name of the S3 bucket for ML artifacts"
+  value       = aws_s3_bucket.ml_artifacts.bucket
+}
+
+output "ml_artifacts_bucket_arn" {
+  description = "ARN of the S3 bucket for ML artifacts"
+  value       = aws_s3_bucket.ml_artifacts.arn
+}
+
