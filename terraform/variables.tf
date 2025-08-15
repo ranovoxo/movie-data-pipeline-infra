@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "ml_artifacts_bucket_name" {
+  description = "Name of the S3 bucket for storing ML model artifacts"
+  type        = string
+  default     = "ml-artifacts-prod"
+}
+
 # variable "ami_id" {
 
 #  description = "AMI_ID for the EC2 instance (Ubuntu 20.04 LTS)"
