@@ -1,9 +1,11 @@
 resource "aws_s3_bucket" "ml_artifacts" {
-  bucket = var.ml_artifacts_bucket_name
+  provider = aws.us_east_1
+  bucket   = var.ml_artifacts_bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "ml_artifacts" {
-  bucket = aws_s3_bucket.ml_artifacts.id
+  provider = aws.us_east_1
+  bucket   = aws_s3_bucket.ml_artifacts.id
 
   versioning_configuration {
     status = "Enabled"
@@ -11,7 +13,8 @@ resource "aws_s3_bucket_versioning" "ml_artifacts" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "ml_artifacts" {
-  bucket = aws_s3_bucket.ml_artifacts.id
+  provider = aws.us_east_1
+  bucket   = aws_s3_bucket.ml_artifacts.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -22,15 +25,17 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "ml_artifacts" {
 }
 
 resource "aws_s3_bucket_public_access_block" "ml_artifacts" {
-  bucket                  = aws_s3_bucket.ml_artifacts.id
-  block_public_acls       = true
-  ignore_public_acls      = true
-  block_public_policy     = true
+  provider               = aws.us_east_1
+  bucket                 = aws_s3_bucket.ml_artifacts.id
+  block_public_acls      = true
+  ignore_public_acls     = true
+  block_public_policy    = true
   restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "ml_artifacts" {
-  bucket = aws_s3_bucket.ml_artifacts.id
+  provider = aws.us_east_1
+  bucket   = aws_s3_bucket.ml_artifacts.id
 
   rule {
     id     = "ml-artifacts-retention"
