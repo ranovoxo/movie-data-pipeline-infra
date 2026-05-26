@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "ml_artifacts_bucket_name" {
   description = "Name of the S3 bucket for storing ML model artifacts"
   type        = string
-  default     = "ml-artifacts-prod"
+  default     = "ml-artifacts-prod2"
 }
 
 # variable "ami_id" {
