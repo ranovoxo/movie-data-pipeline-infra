@@ -28,3 +28,17 @@ output "ml_artifacts_bucket_arn" {
   value       = aws_s3_bucket.ml_artifacts.arn
 }
 
+output "reports_website_amplify_app_id" {
+  description = "Amplify app ID for the optional reports website"
+  value       = var.enable_reports_website ? aws_amplify_app.reports_website[0].id : null
+}
+
+output "reports_website_default_domain" {
+  description = "Default Amplify domain for the optional reports website"
+  value       = var.enable_reports_website ? aws_amplify_app.reports_website[0].default_domain : null
+}
+
+output "reports_website_branch_url" {
+  description = "Deployed branch URL for the optional reports website"
+  value       = var.enable_reports_website ? "https://${var.reports_website_branch}.${aws_amplify_app.reports_website[0].default_domain}" : null
+}

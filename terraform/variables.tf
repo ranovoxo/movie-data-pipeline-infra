@@ -92,6 +92,74 @@ variable "budget_limit" {
   default     = "20"
 }
 
+variable "budget_alert_emails" {
+  description = "Email addresses to notify when forecasted monthly spend exceeds the budget. Leave empty to disable email alerts."
+  type        = list(string)
+  default     = []
+}
+
+variable "enable_reports_website" {
+  description = "Whether to provision the optional public movie reports website hosting resources."
+  type        = bool
+  default     = false
+}
+
+variable "reports_website_name" {
+  description = "Name for the Amplify app that hosts the movie reports website."
+  type        = string
+  default     = "movie-reports-website"
+}
+
+variable "reports_website_repository" {
+  description = "GitHub repository URL for the reports website, for example https://github.com/ranovoxo/movie-etl-web."
+  type        = string
+  default     = ""
+}
+
+variable "reports_website_branch" {
+  description = "Git branch Amplify should deploy for the reports website."
+  type        = string
+  default     = "main"
+}
+
+variable "reports_website_github_access_token" {
+  description = "GitHub access token used by Amplify to connect to the reports website repository."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "reports_website_database_url" {
+  description = "Server-side PostgreSQL/RDS connection string used by the reports website API routes."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "reports_website_pgssl" {
+  description = "Whether the reports website should use TLS when connecting to PostgreSQL/RDS."
+  type        = bool
+  default     = true
+}
+
+variable "reports_website_pipeline_label" {
+  description = "Public label displayed in the reports website status area."
+  type        = string
+  default     = "AWS EC2 Airflow"
+}
+
+variable "reports_website_stage" {
+  description = "Amplify branch stage for the reports website."
+  type        = string
+  default     = "PRODUCTION"
+}
+
+variable "reports_website_environment_variables" {
+  description = "Additional environment variables for the reports website Amplify app."
+  type        = map(string)
+  default     = {}
+}
+
 variable "airflow_admin_username" {
   description = "Airflow admin username"
   type        = string

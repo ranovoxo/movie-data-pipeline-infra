@@ -6,8 +6,9 @@ This repository contains Terraform configurations for provisioning the AWS infra
 
 * **EC2 instance** – Ubuntu 20.04 host bootstrapped with Docker and the pipeline via a user-data script. An Elastic IP and security group (SSH + Airflow UI) are attached.
 * **RDS PostgreSQL** – database instance with credentials stored in AWS Systems Manager Parameter Store.
+* **Reports website hosting (optional)** – AWS Amplify app for the public Next.js reports website.
 * **IAM** – instance role with SSM + KMS permissions and membership for a pre-existing CLI group.
-* **Budget** – monthly cost budget to keep spending under control.
+* **Budget** – monthly cost budget, with optional email alerts, to keep spending under control.
 
 ## Requirements
 
@@ -28,6 +29,7 @@ This repository contains Terraform configurations for provisioning the AWS infra
   - `iam.tf` sets up IAM roles and an instance profile
   - `rds.tf` provisions a PostgreSQL database and stores the password in Parameter Store
   - `storage.tf` defines a monthly cost budget
+  - `website_amplify.tf` optionally provisions low-idle-cost Amplify hosting for the reports website
   - `outputs.tf` exports useful values such as the instance IP and RDS endpoint
 
 ## Usage
@@ -64,6 +66,41 @@ This repository contains Terraform configurations for provisioning the AWS infra
 
 After provisioning, Terraform outputs the public IP of the EC2 instance along with other useful identifiers.
 
+## Optional Reports Website
+
+The cost-aware default is to keep the website infrastructure disabled:
+
+```hcl
+enable_reports_website = false
+```
+
+When you are ready to deploy the Next.js reports website, enable Amplify hosting:
+
+```hcl
+enable_reports_website              = true
+reports_website_repository          = "https://github.com/<owner>/movie-etl-web"
+reports_website_branch              = "main"
+reports_website_github_access_token = "<github-token>"
+reports_website_database_url        = "postgresql://report_user:<password>@<rds-endpoint>:5432/<db>?sslmode=require"
+budget_alert_emails                 = ["you@example.com"]
+```
+
+Why Amplify first:
+
+- It hosts the Next.js frontend and server-side API routes without a second always-on EC2 instance.
+- It has low idle cost for a small public dashboard.
+- It keeps PostgreSQL credentials in server-side environment variables instead of browser code.
+- It can deploy from GitHub automatically when the website repo changes.
+
+Cost notes:
+
+- Avoid adding a custom domain until you need it; the default Amplify domain is free to use.
+- Use a read-only database user for `reports_website_database_url`.
+- Terraform state will contain sensitive values supplied to Amplify. Store state securely before enabling the website.
+- If RDS is private-only later, Amplify may not be able to reach it directly. In that case, move the API layer to Lambda/ECS inside the VPC and keep the frontend on S3/CloudFront or Amplify.
+
+Terraform outputs the Amplify app ID and branch URL when `enable_reports_website = true`.
+
 ## Bootstrap script
 
 The `ec2_user_data.sh.tpl` template is rendered with database connection details and executed on the EC2 instance at launch. The script:
@@ -94,4 +131,3 @@ Running `terraform apply` will produce values such as the instance ID, Elastic I
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
