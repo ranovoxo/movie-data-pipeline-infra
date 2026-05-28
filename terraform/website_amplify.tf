@@ -2,6 +2,10 @@
 #
 # This uses AWS Amplify Hosting for the Next.js frontend and server-side API
 # routes, avoiding another always-on EC2 instance for the website.
+locals {
+  reports_website_database_url = var.reports_website_database_url != "" ? var.reports_website_database_url : "postgresql://${urlencode(var.db_username)}:${urlencode(var.db_password)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${var.db_name}?sslmode=require"
+}
+
 resource "aws_amplify_app" "reports_website" {
   count = var.enable_reports_website ? 1 : 0
 
@@ -31,7 +35,7 @@ resource "aws_amplify_app" "reports_website" {
 
   environment_variables = merge(
     {
-      DATABASE_URL               = var.reports_website_database_url
+      DATABASE_URL               = local.reports_website_database_url
       PGSSL                      = tostring(var.reports_website_pgssl)
       NEXT_PUBLIC_PIPELINE_LABEL = var.reports_website_pipeline_label
     },
@@ -74,7 +78,7 @@ resource "aws_amplify_branch" "reports_website" {
 
   environment_variables = merge(
     {
-      DATABASE_URL               = var.reports_website_database_url
+      DATABASE_URL               = local.reports_website_database_url
       PGSSL                      = tostring(var.reports_website_pgssl)
       NEXT_PUBLIC_PIPELINE_LABEL = var.reports_website_pipeline_label
     },

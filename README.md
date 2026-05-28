@@ -107,7 +107,7 @@ The `ec2_user_data.sh.tpl` template is rendered with database connection details
 
 1. Installs Docker and Docker Compose
 2. Clones the pipeline repository and pulls the latest changes
-3. Retrieves secrets (database credentials, pgAdmin login, export paths, etc.) from SSM Parameter Store
+3. Retrieves secrets (database credentials, export paths, etc.) from SSM Parameter Store
 4. Writes these values to a `.env` file and starts the Docker Compose stack
 
 ## Variables

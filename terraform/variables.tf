@@ -46,7 +46,7 @@ variable "subnet_id" {
 variable "tmdb_key" {
   description = "Your TMDB API key (for .env injection)"
   type        = string
-  default     = ""  
+  default     = ""
 }
 
 variable "pipeline_cli_users" {
@@ -130,7 +130,7 @@ variable "reports_website_github_access_token" {
 }
 
 variable "reports_website_database_url" {
-  description = "Server-side PostgreSQL/RDS connection string used by the reports website API routes."
+  description = "Optional server-side PostgreSQL/RDS connection string used by the reports website API routes. Leave empty to derive it from the Terraform-managed RDS instance."
   type        = string
   sensitive   = true
   default     = ""
