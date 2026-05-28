@@ -23,6 +23,7 @@ resource "aws_amplify_app" "reports_website" {
             - npm ci
         build:
           commands:
+            - env | grep -e DATABASE_URL -e PGSSL -e NEXT_PUBLIC_PIPELINE_LABEL >> .env.production
             - npm run build
       artifacts:
         baseDirectory: .next
