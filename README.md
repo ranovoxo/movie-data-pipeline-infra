@@ -2,6 +2,8 @@
 
 This repository contains Terraform configurations for provisioning the AWS infrastructure required to run the [movie-data-pipeline](https://github.com/ranovoxo/movie-data-pipeline) project. The configuration spins up an EC2 instance to host the Airflow pipeline, a PostgreSQL RDS database, IAM roles and group membership, and a monthly cost budget.
 
+![Movie data pipeline architecture](assets/movie-data-pipeline-architecture.png)
+
 ### Resources Provisioned
 
 * **EC2 instance** – Ubuntu 20.04 host bootstrapped with Docker and the pipeline via a user-data script. An Elastic IP and security group (SSH + Airflow UI) are attached.
