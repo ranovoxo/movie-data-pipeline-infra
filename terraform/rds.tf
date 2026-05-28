@@ -1,15 +1,15 @@
 # RDS PostgreSQL instance
 resource "aws_db_instance" "postgres" {
-  identifier              = "movie-postgres"
-  allocated_storage       = 20
-  engine                  = "postgres"
-  engine_version          = "14"
-  instance_class          = "db.t3.micro"
-  username                = var.db_username
-  password                = aws_ssm_parameter.db_password.value
-  db_name                 = var.db_name
-  publicly_accessible     = true
-  skip_final_snapshot     = true
+  identifier          = "movie-postgres"
+  allocated_storage   = 20
+  engine              = "postgres"
+  engine_version      = "14"
+  instance_class      = "db.t3.micro"
+  username            = var.db_username
+  password            = aws_ssm_parameter.db_password.value
+  db_name             = var.db_name
+  publicly_accessible = true
+  skip_final_snapshot = true
   deletion_protection = true
 
 }

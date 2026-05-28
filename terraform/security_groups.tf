@@ -4,7 +4,7 @@ resource "aws_security_group" "pipeline_sg" {
   vpc_id      = var.vpc_id
 
   lifecycle {
-    prevent_destroy =  true
+    prevent_destroy = true
   }
 
   ingress {

@@ -160,6 +160,36 @@ variable "reports_website_environment_variables" {
   default     = {}
 }
 
+variable "reports_api_subnet_ids" {
+  description = "Subnet IDs for the reports API Lambda. Defaults to subnet_id when empty."
+  type        = list(string)
+  default     = []
+}
+
+variable "reports_api_rds_security_group_id" {
+  description = "Security group ID attached to RDS that should allow inbound PostgreSQL from the reports API Lambda. Leave empty to skip managing the rule."
+  type        = string
+  default     = ""
+}
+
+variable "reports_api_cors_allow_origin" {
+  description = "Allowed CORS origin for the reports API."
+  type        = string
+  default     = "*"
+}
+
+variable "reports_api_memory_size" {
+  description = "Memory size for the reports API Lambda."
+  type        = number
+  default     = 256
+}
+
+variable "reports_api_timeout_seconds" {
+  description = "Timeout in seconds for the reports API Lambda."
+  type        = number
+  default     = 15
+}
+
 variable "airflow_admin_username" {
   description = "Airflow admin username"
   type        = string

@@ -37,11 +37,11 @@ resource "aws_iam_role_policy" "pipeline_kms_decrypt" {
   role = aws_iam_role.pipeline_instance_role.id
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
       Action   = ["kms:Decrypt"]
-      Resource = "arn:aws:kms:us-east-1:030878370508:key/52ce5ee6-e85b-49e8-9db6-0067e291a016"   
+      Resource = "arn:aws:kms:us-east-1:030878370508:key/52ce5ee6-e85b-49e8-9db6-0067e291a016"
     }]
   })
 }

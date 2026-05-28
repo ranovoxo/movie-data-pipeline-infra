@@ -25,11 +25,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "ml_artifacts" {
 }
 
 resource "aws_s3_bucket_public_access_block" "ml_artifacts" {
-  provider               = aws.us_east_1
-  bucket                 = aws_s3_bucket.ml_artifacts.id
-  block_public_acls      = true
-  ignore_public_acls     = true
-  block_public_policy    = true
+  provider                = aws.us_east_1
+  bucket                  = aws_s3_bucket.ml_artifacts.id
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
   restrict_public_buckets = true
 }
 

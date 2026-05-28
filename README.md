@@ -9,6 +9,7 @@ This repository contains Terraform configurations for provisioning the AWS infra
 * **EC2 instance** – Ubuntu 20.04 host bootstrapped with Docker and the pipeline via a user-data script. An Elastic IP and security group (SSH + Airflow UI) are attached.
 * **RDS PostgreSQL** – database instance with credentials stored in AWS Systems Manager Parameter Store.
 * **Reports website hosting (optional)** – AWS Amplify app for the public Next.js reports website.
+* **Reports API** – API Gateway + Lambda backend for reading curated RDS reporting tables from inside the VPC.
 * **IAM** – instance role with SSM + KMS permissions and membership for a pre-existing CLI group.
 * **Budget** – monthly cost budget, with optional email alerts, to keep spending under control.
 
@@ -31,6 +32,7 @@ This repository contains Terraform configurations for provisioning the AWS infra
   - `iam.tf` sets up IAM roles and an instance profile
   - `rds.tf` provisions a PostgreSQL database and stores the password in Parameter Store
   - `storage.tf` defines a monthly cost budget
+  - `reports_api.tf` provisions the low-cost Lambda/API Gateway reports backend
   - `website_amplify.tf` optionally provisions low-idle-cost Amplify hosting for the reports website
   - `outputs.tf` exports useful values such as the instance IP and RDS endpoint
 
@@ -89,19 +91,19 @@ budget_alert_emails                 = ["you@example.com"]
 
 Why Amplify first:
 
-- It hosts the Next.js frontend and server-side API routes without a second always-on EC2 instance.
+- It hosts the Next.js frontend without a second always-on EC2 instance.
 - It has low idle cost for a small public dashboard.
-- It keeps PostgreSQL credentials in server-side environment variables instead of browser code.
+- It calls the API Gateway reports backend, which reaches RDS from inside the VPC.
 - It can deploy from GitHub automatically when the website repo changes.
 
 Cost notes:
 
 - Avoid adding a custom domain until you need it; the default Amplify domain is free to use.
-- Use a read-only database user for `reports_website_database_url`.
+- Use a read-only database user for the reports API database URL.
 - Terraform state will contain sensitive values supplied to Amplify. Store state securely before enabling the website.
-- If RDS is private-only later, Amplify may not be able to reach it directly. In that case, move the API layer to Lambda/ECS inside the VPC and keep the frontend on S3/CloudFront or Amplify.
+- Keep RDS ingress locked to trusted security groups. The reports API Lambda security group should be allowed to query PostgreSQL on port `5432`.
 
-Terraform outputs the Amplify app ID and branch URL when `enable_reports_website = true`.
+Terraform outputs the Amplify app ID, website URL, and API Gateway URL.
 
 ## Bootstrap script
 

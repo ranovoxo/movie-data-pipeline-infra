@@ -23,7 +23,7 @@ resource "aws_amplify_app" "reports_website" {
             - npm ci
         build:
           commands:
-            - env | grep -e DATABASE_URL -e PGSSL -e NEXT_PUBLIC_PIPELINE_LABEL >> .env.production
+            - env | grep -e DATABASE_URL -e PGSSL -e NEXT_PUBLIC_PIPELINE_LABEL -e NEXT_PUBLIC_REPORTS_API_URL >> .env.production
             - npm run build
       artifacts:
         baseDirectory: .next
@@ -36,9 +36,10 @@ resource "aws_amplify_app" "reports_website" {
 
   environment_variables = merge(
     {
-      DATABASE_URL               = local.reports_website_database_url
-      PGSSL                      = tostring(var.reports_website_pgssl)
-      NEXT_PUBLIC_PIPELINE_LABEL = var.reports_website_pipeline_label
+      DATABASE_URL                = local.reports_website_database_url
+      PGSSL                       = tostring(var.reports_website_pgssl)
+      NEXT_PUBLIC_PIPELINE_LABEL  = var.reports_website_pipeline_label
+      NEXT_PUBLIC_REPORTS_API_URL = aws_apigatewayv2_api.reports_api.api_endpoint
     },
     var.reports_website_environment_variables
   )
@@ -79,9 +80,10 @@ resource "aws_amplify_branch" "reports_website" {
 
   environment_variables = merge(
     {
-      DATABASE_URL               = local.reports_website_database_url
-      PGSSL                      = tostring(var.reports_website_pgssl)
-      NEXT_PUBLIC_PIPELINE_LABEL = var.reports_website_pipeline_label
+      DATABASE_URL                = local.reports_website_database_url
+      PGSSL                       = tostring(var.reports_website_pgssl)
+      NEXT_PUBLIC_PIPELINE_LABEL  = var.reports_website_pipeline_label
+      NEXT_PUBLIC_REPORTS_API_URL = aws_apigatewayv2_api.reports_api.api_endpoint
     },
     var.reports_website_environment_variables
   )

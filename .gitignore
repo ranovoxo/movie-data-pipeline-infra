@@ -44,3 +44,5 @@ important_commands.txt
 plan.tfplan
 movie-pipeline-key.pem
 important_notes.txt
+lambda/**/node_modules/
+terraform/.terraform/*.zip

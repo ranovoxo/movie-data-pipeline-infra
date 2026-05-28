@@ -42,3 +42,8 @@ output "reports_website_branch_url" {
   description = "Deployed branch URL for the optional reports website"
   value       = var.enable_reports_website ? "https://${var.reports_website_branch}.${aws_amplify_app.reports_website[0].default_domain}" : null
 }
+
+output "reports_api_url" {
+  description = "Base URL for the reports API Gateway"
+  value       = aws_apigatewayv2_api.reports_api.api_endpoint
+}
